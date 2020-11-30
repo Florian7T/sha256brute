@@ -1,7 +1,7 @@
 # sha256brute
 
 
-sha256brute.py is a CPU powered SHA256 multicore alphabetic password bruteforcer
+sha256brute.py is a CPU powered SHA256 multicore alphabetic password bruteforcer<br>
 This means that it will check every possible password in SHA256 until it finds a match.
 To speed things up I added multiple modes to the bruteforcing tool:
 Mode 1: numeric mode
