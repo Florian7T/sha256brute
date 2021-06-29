@@ -1,20 +1,22 @@
 import hashlib,multiprocessing as mp
-from timeit import default_timer as timer
+import time as timer
 
 def bruteThread(number,chars,jump,sha,done):
-    startTimer = timer()
+    start = timer.time()
     b = [number]
     a = len(chars)
+    b_len = 1
     c = 0
     while True:
         c+=1
-        for i in range(len(b)-1, -1, -1):
+        for i in range(b_len-1, -1, -1):
             if b[i] >= a:
-                b[i] = b[i] % a
+                b[i] = b[i] - a
                 if i == 0:
-                    b.insert(0, 1)
+                    b.insert(0, 0)
+                    b_len+=1
                     if number == 0:
-                        print(f"Brutforcing at: {len(b)} characters")
+                        print(f"Brutforcing at: {b_len} characters")
                 else:
                     b [i-1] += 1
         x = ""
@@ -25,13 +27,14 @@ def bruteThread(number,chars,jump,sha,done):
             pw = hashlib.sha256(x.encode()).hexdigest()
             print(f"|Password: {x}")
             print(f"|SHA256: {pw}")
-            time = timer()-startTimer
+            time = timer.time()-start
             print(f"|Time: {time}")
             print(f"|Hashes: {c}") #fix
             print(f"|Speed: {int(c/time)}H/s")
             done.set()
+            return
 
-        b [len(b) - 1] += jump
+        b [b_len - 1] += jump
 
 
 if __name__ == "__main__":
@@ -59,6 +62,7 @@ if __name__ == "__main__":
         threadcount = mp.cpu_count()
         done = mp.Event()
         jobs = []
+
         for x in range(threadcount):
             p = mp.Process(target=bruteThread, args=(x,chars,threadcount,sha,done,))
             jobs.append(p)
@@ -66,7 +70,3 @@ if __name__ == "__main__":
         done.wait()
         for x in jobs:
             x.kill()
-
-
-
-
