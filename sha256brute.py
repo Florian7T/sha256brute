@@ -1,40 +1,43 @@
-import hashlib,multiprocessing as mp
+import hashlib, multiprocessing as mp
 import time as timer
 
-def bruteThread(number,chars,jump,sha,done):
+
+def bruteThread(number, chars, jump, sha, done,_list):
     start = timer.time()
     b = [number]
     a = len(chars)
     b_len = 1
     c = 0
     while True:
-        c+=1
-        for i in range(b_len-1, -1, -1):
+        c += 1
+        for i in range(b_len - 1, -1, -1):
             if b[i] >= a:
-                b[i] = b[i] - a
+                b[i] = b[i] % a
                 if i == 0:
-                    b.insert(0, 0)
-                    b_len+=1
+                    b.insert(0, int(b[i]/a))
+                    b_len += 1
                     if number == 0:
                         print(f"Brutforcing at: {b_len} characters")
                 else:
-                    b [i-1] += 1
+                    b[i - 1] += 1
         x = ""
+
         for i in b:
-            x += chars [i]
+            try: x += chars[i]
+            except Exception:
+                print(b,i,number)
+                return
+
 
         if hashlib.sha256(x.encode()).hexdigest() == sha:
             pw = hashlib.sha256(x.encode()).hexdigest()
-            print(f"|Password: {x}")
-            print(f"|SHA256: {pw}")
-            time = timer.time()-start
-            print(f"|Time: {time}")
-            print(f"|Hashes: {c}") #fix
-            print(f"|Speed: {int(c/time)}H/s")
+            _list.append(x)
+            _list.append(c)
+            _list.append(number)
             done.set()
             return
 
-        b [b_len - 1] += jump
+        b[b_len - 1] += jump
 
 
 if __name__ == "__main__":
@@ -60,13 +63,25 @@ if __name__ == "__main__":
             print("5: all")
             continue
         threadcount = mp.cpu_count()
+        mp_list = mp.Manager().list()
         done = mp.Event()
         jobs = []
-
+        start = timer.time()
+        print(f'Starting with {threadcount} {"subprocess" if threadcount == 1 else "subprocesses"}..')
         for x in range(threadcount):
-            p = mp.Process(target=bruteThread, args=(x,chars,threadcount,sha,done,))
+            p = mp.Process(target=bruteThread, args=(x, chars, threadcount, sha, done,mp_list))
             jobs.append(p)
             p.start()
+        print('All subprocesses successfully started!')
         done.wait()
+        time = timer.time() - start
         for x in jobs:
             x.kill()
+        print()
+        print(f"|Password: {mp_list[0]}")
+        print(f"|SHA256: {sha}")
+        print(f"|Time: {round(time,2)}s")
+        print(f"|Hashes~: {mp_list[1]*threadcount}")  # fix
+        speed_s = int((mp_list[1]*threadcount) / time)
+        print(f"|Speed~: {speed_s}H/s -> ~{round(speed_s/1000)}kH/s -> ~{round(speed_s/1000000)}MH/s")
+        print(f"|Subprocess: {mp_list[2]}")
